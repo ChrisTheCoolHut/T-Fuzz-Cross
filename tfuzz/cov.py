@@ -1,6 +1,6 @@
 import tracer
 import os
-from itertools import islice, izip
+from itertools import islice
 import collections
 import logging
 import functools
@@ -41,7 +41,10 @@ class DynamicTrace(object):
     def _collect_cov(self):
         if self.target_opts == None or self.input_placeholder not in self.target_opts:
             # the target program reads from stdin
-            t = qemu_runner.QEMURunner(self.binary, input=file(self.input_file).read())
+            with open(self.input_file, 'rb') as f:
+                program_input = f.read()
+                #program_input = str.encode(program_input)
+                t = qemu_runner.QEMURunner(self.binary, input=program_input)
         else:
             opts = replace_input_placeholder(self.target_opts,
                                              self.input_file,
@@ -54,7 +57,7 @@ class DynamicTrace(object):
             self._tmout = True
 
         nodes = t.trace
-        edges = izip(nodes, islice(nodes, 1, None))
+        edges = list(zip(nodes, islice(nodes, 1, None)))
 
         self.n_cov.update(collections.Counter(nodes))
         self.e_cov.update(collections.Counter(edges))
@@ -66,10 +69,10 @@ class DynamicTrace(object):
         return self._tmout
 
     def edges(self):
-        return self.e_cov.viewkeys()
+        return self.e_cov.keys()
 
     def nodes(self):
-        return self.n_cov.viewkeys()
+        return self.n_cov.keys()
 
 class AccCov(object):
     def __init__(self):
@@ -87,7 +90,7 @@ class AccCov(object):
         self.acc_node_cov.update(trace.n_cov)
 
     def nodes(self):
-        return self.acc_node_cov.viewkeys()
+        return self.acc_node_cov.keys()
 
     def edges(self):
-        return self.acc_edge_cov.viewkeys()
+        return self.acc_edge_cov.keys()

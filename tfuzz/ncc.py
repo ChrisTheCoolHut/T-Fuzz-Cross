@@ -88,7 +88,12 @@ class NCCDetector(object):
     def __init__(self, program_path, filters=None):
         self.program_path = program_path
         self.project = angr.Project(program_path, auto_load_libs=False)
-        self.cfg = self.project.analyses.CFG()
+        try:
+            self.cfg = self.project.analyses.CFG()
+        except angr.errors.SimSolverModeError as e:
+            print("angr CFG failed, trying emulated CFG")
+            self.cfg = self.project.analyses.CFG(resolve_indirect_jumps=False)
+
         self.filters = [] if filters == None else filters
 
     def add_filter(self, filter):

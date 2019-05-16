@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from .r2 import Radare2
 
 l = logging.getLogger("tfuzz.qemu_runner")
+l.setLevel(logging.DEBUG)
 
 try:
     import shellphish_qemu
@@ -25,11 +26,11 @@ class RunnerEnvironmentError(Exception):
     pass
 
 def binary_type(binary):
-    with file(binary) as f:
+    with open(binary, 'rb') as f:
         f4 = f.read(4)
-        if f4[1:] == "CGC":
+        if f4[1:] == b"CGC":
             return "cgc"
-        elif f4[1:] == "ELF":
+        elif f4[1:] == b"ELF":
             return "elf"
 
         return "Other"
@@ -56,7 +57,7 @@ class QEMURunner(object):
         self._record_trace = record_trace
         self.input = input
 
-        if isinstance(seed, (int, long)):
+        if isinstance(seed, int):
             seed = str(seed)
         self._seed = seed
         self._memory_limit = memory_limit
@@ -119,10 +120,25 @@ class QEMURunner(object):
         elif btype == "elf":
             self._record_magic = False
             r2 = Radare2(self.binary)
+            # TODO: Rework this into cleaner parse
             if r2.arch == "x86" and r2.bits == 64:
                 tname = "linux-x86_64"
             elif r2.arch == "x86" and r2.bits == 32:
                 tname = "linux-i386"
+            elif r2.arch == "mips" and r2.bits == 32 and r2.endian == 'little':
+                tname = "linux-mipsel"
+            elif r2.arch == "mips" and r2.bits == 32 and r2.endian == 'big':
+                tname = "linux-mips"
+            elif r2.arch == "mips" and r2.bits == 64:
+                tname = "linux-mips64"
+            elif r2.arch == "arm" and r2.bits == 32:
+                tname = "linux-arm"
+            elif r2.arch == "aarch64":
+                tname = "linux-aarch64"
+            elif r2.arch == "ppc" and r2.bits == 32:
+                tname = "linux-ppc"
+            elif r2.arch == "ppc" and r2.bits == 64:
+                tname = "linux-ppc64"
             else:
                 raise RunnerEnvironmentError("Binary type not supported")
         else:
@@ -185,7 +201,7 @@ class QEMURunner(object):
             p = None
             try:
                 # we assume qemu with always exit and won't block
-                if type(self.input) == str:
+                if isinstance(self.input, str) or isinstance(self.input, bytes):
                     l.debug("Tracing as raw input")
                     l.debug(" ".join(args))
                     p = subprocess32.Popen(args, stdin=subprocess32.PIPE,

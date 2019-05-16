@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--work_dir', required=True, help='the work directory for tfuzz')
     parser.add_argument('--seed_dir', help='the work directory of initial seeds')
     parser.add_argument('--target_opts', help='The options to pass to the argument')
+    parser.add_argument('--afl_count', default=1, help='Number of afl instances', type=int)
     parser.add_argument('-v', "--verbose", help='Increase the logging verbosity',
                         action='store_true')
     parser.add_argument('--ph', default='@@', help='The place holder for input file to fuzz')
@@ -31,7 +32,7 @@ def main():
     program = os.path.abspath(args.program)
     print(program)
     if not os.path.exists(program):
-        print("%s does not exist" % (args.program))
+        print(("%s does not exist" % (args.program)))
         sys.exit(-1)
     
     work_dir = os.path.abspath(args.work_dir)
@@ -39,7 +40,7 @@ def main():
     if args.seed_dir != None:
         seed_dir = os.path.abspath(args.seed_dir)
         if not os.path.exists(seed_dir):
-            print("%s does not exist" % (args.seed_dir))
+            print(("%s does not exist" % (args.seed_dir)))
             sys.exit(-1)
         for sf in os.listdir(seed_dir):
             seeds.append(os.path.join(seed_dir, sf))
@@ -50,7 +51,8 @@ def main():
         argv = None
 
     tfuzzsys = TFuzzSys(program, work_dir, target_opts=argv,
-                        input_placeholder=args.ph, seed_files=seeds)
+                        input_placeholder=args.ph, seed_files=seeds,
+                        afl_count=args.afl_count)
 
     tfuzzsys.run()
 

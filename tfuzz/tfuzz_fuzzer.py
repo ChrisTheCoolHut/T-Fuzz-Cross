@@ -13,6 +13,7 @@ from .executor import Executor
 from .utils import replace_input_placeholder
 
 logger = logging.getLogger("tfuzz.tfuzz_fuzzer")
+logger.setLevel(logging.DEBUG)
 
 class Fuzzer(object):
     '''
@@ -21,7 +22,8 @@ class Fuzzer(object):
     '''
 
     def __init__(self, tprogram, seed_files, workdir, target_opts=None,
-                 input_placeholder='@@', afl_opts=None):
+                 input_placeholder='@@', afl_opts=None, afl_count=1, 
+                 library_path=None):
         self.tprogram = tprogram
         self.target_opts = target_opts
         self.workdir = workdir
@@ -47,12 +49,11 @@ class Fuzzer(object):
                 # the seed results in timeout
                 self.tmout_inputs.append(sf)
             else:
-                seeds.append(file(sf).read())
+                with open(sf, 'r') as f:
+                    seeds.append(f.read())
         logger.debug("Classifying the seeds for %s ended", tprogram.program_name)
 
-        use_qemu = False
-        if tprogram.is_cgc():
-            use_qemu = True
+        use_qemu =  True 
 
         logger.debug("fuzzing %s with opts: %s", self.tprogram.program_path,
                      str(target_opts))
@@ -60,7 +61,9 @@ class Fuzzer(object):
         self._fuzzer = SFFuzzer(self.tprogram.program_path, self.workdir,
                                 seeds=seeds, qemu=use_qemu,
                                 create_dictionary=False,
-                                target_opts=target_opts, extra_opts=afl_opts)
+                                target_opts=target_opts, extra_opts=afl_opts,
+                                afl_count=afl_count,
+                                library_path=library_path)
 
         # save the seed files resulting in crashes and timeout 
         self.save_crash_and_tmout_inputs()
@@ -99,9 +102,8 @@ class Fuzzer(object):
                              % (subdir, afl_instance))
 
         subdir = os.path.join(self._fuzzer.out_dir, afl_instance, subdir)
-        generated_files = filter(lambda x: x.startswith('id:'),
-                                 os.listdir(subdir))
-        return map(lambda x: os.path.join(subdir, x), generated_files)
+        generated_files = [x for x in os.listdir(subdir) if x.startswith('id:')]
+        return [os.path.join(subdir, x) for x in generated_files]
 
     def generated_inputs(self, afl_instance='fuzzer-master'):
         return self.__find_generated_files(afl_instance, 'queue')
@@ -111,18 +113,16 @@ class Fuzzer(object):
 
     def crash_seeds(self):
         cs_dir = os.path.join(self._fuzzer.job_dir, 'crashing_seeds')
-        cs_files =  filter(lambda x: x.startswith('crash_seed_'),
-                                 os.listdir(cs_dir))
+        cs_files =  [x for x in os.listdir(cs_dir) if x.startswith('crash_seed_')]
 
-        return map(lambda x: os.path.join(cs_dir, x), cs_files)
+        return [os.path.join(cs_dir, x) for x in cs_files]
 
 
     def timeout_seeds(self):
         timeout_seed_dir = os.path.join(self._fuzzer.job_dir, 'tmout_seeds')
-        timeout_seed_files =  filter(lambda x: x.startswith('tmout_seed_'),
-                                 os.listdir(cs_dir))
+        timeout_seed_files =  [x for x in os.listdir(cs_dir) if x.startswith('tmout_seed_')]
 
-        return map(lambda x: os.path.join(cs_dir, x), cs_files)
+        return [os.path.join(cs_dir, x) for x in cs_files]
 
     def failed_to_start(self):
         afl_log_file = os.path.join(self._fuzzer.job_dir, 'fuzzer-master.log')
@@ -201,7 +201,7 @@ class Fuzzer(object):
             os.makedirs(os.path.dirname(self.stat_file))
 
         with open(self.stat_file, 'w') as f:
-            for key, val in self.stat.items():
+            for key, val in list(self.stat.items()):
                 f.write("%s:%s\n" % (key, val))
 
     def __del__(self):

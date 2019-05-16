@@ -8,7 +8,7 @@ import threading
 import time
 import itertools
 import stat
-import ConfigParser
+import configparser as ConfigParser
 # from graphviz import Digraph
 
 import angr
@@ -53,15 +53,7 @@ class TProgram(object):
             self.inputs_from_fuzzing_parent = eval(self.config.get(self.config_section_name, 'inputs_from_fuzzing_parent'))
 
     def is_cgc(self):
-        '''
-        QUICK HACK by checking the magic values
-        '''
-        ret = False
-        with open(self.program_path, 'r') as f:
-            f4 = f.read(4)
-            if f4[1:] == "CGC":
-                ret = True
-        return ret
+        return  False
 
     @property
     def c_block_addr(self):

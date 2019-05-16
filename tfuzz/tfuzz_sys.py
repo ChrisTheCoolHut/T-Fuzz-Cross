@@ -37,7 +37,7 @@ class TFuzzSys():
 
         # TODO: Add resuming feature
         if os.path.exists(workdir):
-            print("%s already exist" % (workdir))
+            print(("%s already exist" % (workdir)))
             raise Exception()
 
         # preparing seeds
@@ -55,7 +55,7 @@ class TFuzzSys():
 
         os.makedirs(original_tprogram_dir)
         shutil.copyfile(binary_path, original_tprogram_path)
-        os.chmod(original_tprogram_path, 0777)
+        os.chmod(original_tprogram_path, 0o777)
 
         self.dict_file = os.path.join(self.workdir,
                                       self.origin_binary_name + '.dict')
@@ -131,10 +131,13 @@ class TFuzzSys():
         else:
             init_seeds = self.fuzzing_program.inputs_from_fuzzing_parent
     
+        print("Made that fuzzer")
         self.__current_fuzzer = Fuzzer(self.fuzzing_program, init_seeds,
                                        fuzzing_workdir, target_opts=self.target_opts,
                                        input_placeholder=self.input_placeholder,
-                                       afl_opts=self.afl_opts)
+                                       afl_opts=self.afl_opts, 
+                                       afl_count=self.afl_count,
+                                       library_path="/home/chris/Cross-Compiler-Tarballs/uClibc-Cross-Compilers/arm-buildroot-linux-uclibcgnueabi_sdk-buildroot/arm-buildroot-linux-uclibcgnueabi/sysroot")
 
         self.__current_fuzzer.start()
 
@@ -202,7 +205,7 @@ class TFuzzSys():
                     pass
 
                 shutil.copyfile(self.fuzzing_program.program_path, transformed_program_path)
-                os.chmod(transformed_program_path, 0777)
+                os.chmod(transformed_program_path, 0o777)
                 transformed_tprogram = TProgram(transformed_program_path)
 
                 transformed_tprogram.c_all_instr_addrs = self.fuzzing_program.c_all_instr_addrs[:]
