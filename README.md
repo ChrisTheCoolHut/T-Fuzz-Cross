@@ -31,6 +31,7 @@ Try to fuzz a cross-architecture binary:
 ```
   
 ![Video of a run](https://i.imgur.com/lT3rwXN.gif)
++<img src="/.gif/T-Fuzz-Run.gifraw=true" width="200px">
 
 
   
