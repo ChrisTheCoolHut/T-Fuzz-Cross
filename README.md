@@ -16,7 +16,8 @@ READ `install.sh` if you're on Ubuntu, you can probably just run it to install.
 
 Try to fuzz a cross-architecture binary:
 ```
-./TFuzz --program samples/arm/main_static --work_dir working_main
+./TFuzz --program samples/arm/main_static --work_dir working_arm_main
+./TFuzz --program samples/mips/main_static --work_dir working_mips_main
 ```
 
 # Prerequisite
