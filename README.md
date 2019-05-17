@@ -30,7 +30,7 @@ Try to fuzz a cross-architecture binary:
 ./TFuzz --program samples/mips/main_static --work_dir working_mips_main
 ```
   
-+<img src="/.gif/T-Fuzz-Run.gif?raw=true" width="600px">
+<img src="/.gif/T-Fuzz-Run.gif?raw=true" width="600px">
 
 
   
