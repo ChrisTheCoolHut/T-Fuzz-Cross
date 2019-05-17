@@ -5,11 +5,21 @@ T-Fuzz consists of 2 components:
 - Crash Analyzer (CrashAnalyzer): a tool that verifies whether crashes found transformed
   programs are true bugs in the original program or not (coming soon).
 
+## Tested on Ubuntu 16.04
 
-# OS support
+### installing pip and setting up virtualenv &  wrapper
 
-The current version is tested only on Ubuntu-16.04, while trying to run the code,
-please use our tested OS.
+```
+$ sudo apt-get install python-pip python-virtualenv
+$ pip install virtualenvwrapper
+```
+
+Add the following lines to your shell rc file (`~/.bashrc` or `~/.zshrc`).
+
+```
+export WORKON_HOME=$HOME/.virtual_envs
+source /usr/local/bin/virtualenvwrapper.sh
+```
 
 
 READ `install.sh` if you're on Ubuntu, you can probably just run it to install.
@@ -19,6 +29,9 @@ Try to fuzz a cross-architecture binary:
 ./TFuzz --program samples/arm/main_static --work_dir working_arm_main
 ./TFuzz --program samples/mips/main_static --work_dir working_mips_main
 ```
+  
+# Below is the original readme
+
 
 # Prerequisite
 
@@ -48,21 +61,6 @@ $ ./sys/install.sh
 $ sudo apt-get install build-essential gcc-multilib libtool automake autoconf bison debootstrap debian-archive-keyring
 $ sudo apt-get build-dep qemu-system
 $ sudo apt-get install libacl1-dev
-```
-
-
-### installing pip and setting up virtualenv &  wrapper
-
-```
-$ sudo apt-get install python-pip python-virtualenv
-$ pip install virtualenvwrapper
-```
-
-Add the following lines to your shell rc file (`~/.bashrc` or `~/.zshrc`).
-
-```
-export WORKON_HOME=$HOME/.virtual_envs
-source /usr/local/bin/virtualenvwrapper.sh
 ```
 
 ### Creating a python virtual environment
