@@ -11,6 +11,9 @@ T-Fuzz consists of 2 components:
 The current version is tested only on Ubuntu-16.04, while trying to run the code,
 please use our tested OS.
 
+
+READ `install.sh` if you're on Ubuntu, you can probably just run it to install.
+
 # Prerequisite
 
 T-Fuzz system is built on several opensource tools.

@@ -55,7 +55,6 @@ progressbar
 prompt-toolkit
 psutil
 ptyprocess
-pwntools
 py
 pyasn1
 pycparser
@@ -76,8 +75,6 @@ requests
 ROPGadget
 rpyc
 scandir
-shellphish-afl
-shellphish-qemu
 simplegeneric
 six
 snowballstemmer
