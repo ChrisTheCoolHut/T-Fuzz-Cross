@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import sys
+
+from tfuzz import CrashAnalyzer
+from tfuzz.tprogram import TProgram
+
+def collect_all_crashing_inputs(fuzzer_workdir):
+    ret = []
+    crashing_seeds_dir = os.path.join(fuzzer_workdir, 'crashing_seeds')
+    if os.path.exists(crashing_seeds_dir):
+        css = [os.path.join(crashing_seeds_dir, x) for x in os.listdir(crashing_seeds_dir)]
+        ret.extend(css)
+
+    crashes_found_dir = os.path.join(fuzzer_workdir, "sync", "fuzzer-master", "crashes")
+    if os.path.exists(crashes_found_dir):
+        crashes = [x for x in os.listdir(crashes_found_dir) if x.startswith("id:")]
+        crash_files = [os.path.join(crashes_found_dir, x) for x in crashes]
+        ret.extend(crash_files)
+
+    ret_w_sz = [(os.path.getsize(x), x) for x in ret]
+
+    ret_w_sz.sort(key=lambda s: s[0])
+
+    ret = [s[1] for s in ret_w_sz]
+
+    return ret
+
+def main():
+    parser = argparse.ArgumentParser(description='tfuzz CrashAnalyzer')
+    parser.add_argument('--tprogram', required=True, help='path to the tprogram')
+    parser.add_argument('--fuzzer_workdir',
+                        help='fuzzer workdir containing crashing inputs')
+    parser.add_argument('--crash_input',
+                        help='the path to a specific crashing input to the tprogram')
+    parser.add_argument('--result_dir', required=True, help='path save the file for reproducing bug')
+    parser.add_argument('--save_to', required=True, help='prefix for results files')
+    parser.add_argument('--target_opts', help='The options to pass to the argument')
+    parser.add_argument('--ph', default='@@', help='The place holder for input file to fuzz')
+    args = parser.parse_args()
+
+
+    tprogram_path = os.path.abspath(args.tprogram)
+    tprogram_meta_path = tprogram_path + '.meta'
+    fuzzer_workdir = os.path.abspath(args.fuzzer_workdir) if args.fuzzer_workdir != None else None
+    crash_input = os.path.abspath(args.crash_input) if args.crash_input != None else None
+
+    result_dir = os.path.abspath(args.result_dir)
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+
+    if not os.path.exists(tprogram_path) or not os.path.exists(tprogram_meta_path):
+        print("the path does not contain tprogram info")
+        sys.exit(-1)
+
+    stat_file = os.path.join(result_dir, "stat")
+    with open(stat_file, 'w') as f:
+        f.write(tprogram_path + "\n")
+        if fuzzer_workdir != None:
+            f.write(fuzzer_workdir + "\n")
+        if crash_input != None:
+            f.write(crash_input + "\n")
+
+    tprogram = TProgram(tprogram_path)
+
+    if args.target_opts == None:
+        target_opts = None
+    else:
+        target_opts = args.target_opts.split(' ')
+
+    crashing_inputs = []
+    if fuzzer_workdir != None:
+        crashing_inputs += collect_all_crashing_inputs(fuzzer_workdir)
+        if len(crashing_inputs) == 0:
+            print("No crashing inputs found in %s" % (fuzzer_workdir))
+            sys.exit()
+    elif crash_input != None:
+        crashing_inputs += [crash_input]
+
+    idx = 0
+    for ci in crashing_inputs:
+
+        print("Trying %s" % (ci))
+        ca = CrashAnalyzer(tprogram, input_file = ci,
+                       target_opts=target_opts, input_placeholder=args.ph)
+
+        try:
+            x, y, z= ca.collect_constraints()
+            if x == None:
+                print(("%s does not trigger a crash in the target program" % ci))
+                continue
+        except:
+            print("Exception happend while tracing")
+            continue
+
+        blank_state = ca.p.factory.blank_state()
+        blank_state.add_constraints(*ca.collected_constraints)
+        if not blank_state.satisfiable():
+            print("collected constraints not SAT")
+            continue
+
+        if not ca._add_relaxed_offending_constraints(blank_state):
+            print("relaxed constraints add failed")
+            continue
+
+        if 3 in ca.pred_state.posix.files:
+            simf = ca.pred_state.posix.files[3]
+            data = simf.all_bytes()
+        else:
+            # this might be a bug in angr
+            # why did we lose the file in posix plugin
+            data = ca.recover_data_from_preconstraints()
+
+        res = blank_state.solver.eval(data, cast_to=str)
+        rf = os.path.join(result_dir, args.save_to + '_' + str(idx))
+        with open(rf, 'wb') as f:
+            f.write(res)
+
+        meta_f = os.path.join(result_dir, str(idx))
+        with open(meta_f, 'w') as f:
+            f.write(ci + "\n")
+
+        idx = idx + 1
+        print("results saved to " + rf)
+
+    # sat, rep = ca.verify()
+    # # import ipdb; ipdb.set_trace()
+    # if sat:
+    #     print("This is a true bug, result saved in %s" % (args.save_to))
+    #     with open(args.save_to, 'wb') as f:
+    #         f.write(rep)
+    # else:
+    #     print("This might not be a true bug, but you should manually confirm it")
+
+if __name__ == '__main__':
+    main()
