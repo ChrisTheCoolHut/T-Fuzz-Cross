@@ -14,6 +14,11 @@ please use our tested OS.
 
 READ `install.sh` if you're on Ubuntu, you can probably just run it to install.
 
+Try to fuzz a cross-architecture binary:
+```
+./TFuzz --program samples/arm/main_static --work_dir working_main
+```
+
 # Prerequisite
 
 T-Fuzz system is built on several opensource tools.
