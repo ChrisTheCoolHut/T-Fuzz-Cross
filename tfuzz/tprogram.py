@@ -119,6 +119,7 @@ class TProgram(object):
         self.config.set(self.config_section_name, 'c_instr_addr', self.__c_instr_addr)
         self.config.set(self.config_section_name, 'inputs_from_fuzzing_parent', self.inputs_from_fuzzing_parent)
 
-        with open(self.config_file, 'w') as f:
-            self.config.write(f)
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'w') as f:
+                self.config.write(f)
 

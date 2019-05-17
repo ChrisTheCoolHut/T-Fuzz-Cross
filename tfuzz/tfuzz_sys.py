@@ -20,7 +20,7 @@ class TFuzzSys():
 
     def __init__(self, binary_path, workdir, afl_count=1, target_opts=None,
                  seed_files=None, rand_seed=False, check_interval=30,
-                 input_placeholder='@@', afl_opts=None):
+                 input_placeholder='@@', afl_opts=None, ld_prefix=None):
 
         assert os.path.exists(binary_path), "% does not exist" % binary_path
 
@@ -34,6 +34,7 @@ class TFuzzSys():
         self.input_placeholder = input_placeholder
         self.seed_files = seed_files
         self.rand_seed = rand_seed
+        self.ld_prefix = ld_prefix
 
         # TODO: Add resuming feature
         if os.path.exists(workdir):
@@ -137,7 +138,7 @@ class TFuzzSys():
                                        input_placeholder=self.input_placeholder,
                                        afl_opts=self.afl_opts, 
                                        afl_count=self.afl_count,
-                                       library_path="/home/chris/Cross-Compiler-Tarballs/uClibc-Cross-Compilers/arm-buildroot-linux-uclibcgnueabi_sdk-buildroot/arm-buildroot-linux-uclibcgnueabi/sysroot")
+                                       library_path=self.ld_prefix)
 
         self.__current_fuzzer.start()
 

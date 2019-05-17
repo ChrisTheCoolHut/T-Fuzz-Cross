@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--seed_dir', help='the work directory of initial seeds')
     parser.add_argument('--target_opts', help='The options to pass to the argument')
     parser.add_argument('--afl_count', default=1, help='Number of afl instances', type=int)
+    parser.add_argument('--ld_prefix',  help='Binary sysroot')
     parser.add_argument('-v', "--verbose", help='Increase the logging verbosity',
                         action='store_true')
     parser.add_argument('--ph', default='@@', help='The place holder for input file to fuzz')
@@ -52,7 +53,7 @@ def main():
 
     tfuzzsys = TFuzzSys(program, work_dir, target_opts=argv,
                         input_placeholder=args.ph, seed_files=seeds,
-                        afl_count=args.afl_count)
+                        afl_count=args.afl_count, ld_prefix=args.ld_prefix)
 
     tfuzzsys.run()
 
