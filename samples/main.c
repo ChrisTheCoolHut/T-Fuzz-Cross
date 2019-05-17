@@ -12,6 +12,10 @@ int main(int argc,  char *argv[])
 	{
 		do_bad_thing();
 	}
+	if(strstr(other_buf, "fuzz1") != NULL)
+	{
+		do_bad_thing();
+	}
 	return 0;
 }
 
